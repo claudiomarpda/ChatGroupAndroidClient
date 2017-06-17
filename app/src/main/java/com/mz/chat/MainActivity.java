@@ -1,11 +1,15 @@
 package com.mz.chat;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -18,6 +22,10 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
 
     private Client client;
     private TextView messagesTextView;
+    private Button connectButton;
+    private EditText editTextIp;
+    private EditText editTextPort;
+    private EditText editTextMessage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,11 +35,11 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
         setSupportActionBar(toolbar);
 
         messagesTextView = (TextView) findViewById(R.id.text_view);
-        final EditText editTextMessage = (EditText) findViewById(R.id.editTextMessage);
-        final Button connectButton = (Button) findViewById(R.id.connectButton);
+        connectButton = (Button) findViewById(R.id.connectButton);
+        editTextIp = (EditText) findViewById(R.id.editTextIp);
+        editTextPort = (EditText) findViewById(R.id.editTextPort);
+        editTextMessage = (EditText) findViewById(R.id.editTextMessage);
         final Button disconnectButton = (Button) findViewById(R.id.disconnectButton);
-        final EditText editTextIp = (EditText) findViewById(R.id.editTextIp);
-        final EditText editTextPort = (EditText) findViewById(R.id.editTextPort);
         final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
 
         editTextIp.setText("192.168.1.14");
@@ -47,7 +55,6 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
                 String ip = editTextIp.getText().toString();
                 String port = editTextPort.getText().toString();
                 Semaphore connectionSemaphore = new Semaphore(0);
-//                client.connect(ip, port, activityResponse);
                 try {
                     client = new Client(ip, port, activityResponse, connectionSemaphore);
                     connectionSemaphore.acquire();
@@ -65,8 +72,22 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
 //                disconnectButton.setEnabled(true);
             }
         });
-/*
 
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String message = editTextMessage.getText().toString();
+                if (client != null && client.isConnected()) {
+                    client.sendMessage(message);
+                } else {
+                    Snackbar.make(view, "Not connected", Snackbar.LENGTH_SHORT)
+                            .setAction("Action", null).show();
+                }
+                editTextMessage.setText("");
+            }
+        });
+
+        /*
         disconnectButton.setEnabled(false);
         disconnectButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -79,20 +100,6 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
             }
         });
 */
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                String message = editTextMessage.getText().toString();
-                if (client != null && client.isConnected()) {
-                    client.sendMessage(message);
-//                    messagesTextView.setText(messagesTextView.getText().toString() + "\n" + message);
-                } else {
-                    Snackbar.make(view, "Not connected", Snackbar.LENGTH_SHORT)
-                            .setAction("Action", null).show();
-                }
-                editTextMessage.setText("");
-            }
-        });
     }
 
     @Override
@@ -106,5 +113,44 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
         if (client != null) {
             client.disconnect();
         }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        if (id == R.id.action_settings) {
+            if(client != null) {
+                client.disconnect();
+                client = null;
+                connectButton.setVisibility(Button.VISIBLE);
+                editTextIp.setVisibility(EditText.VISIBLE);
+                editTextPort.setVisibility(EditText.VISIBLE);
+
+                // Check if no view has focus
+                View view = this.getCurrentFocus();
+                if (view != null) {
+                    // hides the keyboard
+                    InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+                }
+                Toast.makeText(getBaseContext(), "Connection closed", Toast.LENGTH_SHORT).show();
+            }
+            else {
+                Toast.makeText(getBaseContext(), "There is no connection", Toast.LENGTH_SHORT).show();
+            }
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

@@ -9,9 +9,7 @@ import java.util.concurrent.Semaphore;
 
 /**
  * Created by mz on 12/06/17.
- */
-
-/**
+ * <p>
  * This is a client for a online message system.
  * It uses two connections (sockets), one for sending and other for receiving.
  * The main external server waits for both connections.
@@ -21,9 +19,9 @@ public class Client {
 
     private AsyncResponse asyncResponse;
     private Semaphore sendSemaphore;
+    private Semaphore connectionSemaphore;
     private MessageSender messageSender;
     private MessageReceiver messageReceiver;
-    private Semaphore connectionSemaphore;
 
     // Executor is necessary to run more than one thread
     private Executor executor = Executors.newFixedThreadPool(2);
@@ -72,7 +70,7 @@ public class Client {
     }
 
     public boolean isConnected() {
-        if(messageSender != null && messageReceiver!= null) {
+        if (messageSender != null && messageReceiver != null) {
             return messageSender.isConnected() && messageReceiver.isConnected();
         }
         return false;
@@ -97,10 +95,11 @@ public class Client {
 
             } catch (IOException e) {
                 e.printStackTrace();
-            }
-            finally {
+            } finally {
                 // releases the UI thread whether connection was successful or not
                 connectionSemaphore.release();
+                connectionSemaphore = null;
+                asyncResponse = null;
             }
             return null;
         }
