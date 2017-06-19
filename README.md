@@ -4,13 +4,17 @@
 
 It aims to connect to a server that manages the group connections and the messages received. After connection is successful, the user can send message to the group. A simple UI is used for testing functionalities.<br>
 
+IDE: Android Studio 2.3.3<br>
+Language: Java 7
+
+* Thread safe
 * Socket connection
 * Ready for another connection after failures
-* Handles connection failure<br>
-    when there is no internet connection<br>
-    when loses internet connection while connected<br>
-    when server is off before connection<br>
-    when server stops running while connected<br>
+* Handles connection failure
+   * when there is no internet connection
+   * when loses internet connection while connected
+   * when server is off before connection
+   * when server stops running while connected
 
 For compile details see app/build.grade file.
 
