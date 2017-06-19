@@ -62,6 +62,8 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
                         hideConnectionUi();
                     }
                 } catch (IOException | InterruptedException e) {
+                    showConnectionUi();
+                    Toast.makeText(getBaseContext(), "Check your internet connection", Toast.LENGTH_LONG).show();
                     e.printStackTrace();
                 }
             }
