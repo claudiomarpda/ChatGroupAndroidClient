@@ -15,6 +15,9 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.mz.chat.control.Client;
+import com.mz.chat.util.AsyncResponse;
+
 import java.io.IOException;
 import java.util.concurrent.Semaphore;
 
@@ -39,16 +42,13 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
         editTextIp = (EditText) findViewById(R.id.editTextIp);
         editTextPort = (EditText) findViewById(R.id.editTextPort);
         editTextMessage = (EditText) findViewById(R.id.editTextMessage);
-        final Button disconnectButton = (Button) findViewById(R.id.disconnectButton);
+
         final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        final AsyncResponse activityResponse = this;
 
         editTextIp.setText("192.168.1.14");
         editTextPort.setText("4444");
 
-        disconnectButton.setEnabled(false);
-        disconnectButton.setVisibility(Button.INVISIBLE);
-
-        final AsyncResponse activityResponse = this;
         connectButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -56,20 +56,14 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
                 String port = editTextPort.getText().toString();
                 Semaphore connectionSemaphore = new Semaphore(0);
                 try {
-                    client = new Client(ip, port, activityResponse, connectionSemaphore);
+                    client = Client.connect(ip, port, activityResponse, connectionSemaphore);
                     connectionSemaphore.acquire();
                     if (client.isConnected()) {
-                        connectButton.setVisibility(Button.INVISIBLE);
-                        editTextIp.setVisibility(EditText.INVISIBLE);
-                        editTextPort.setVisibility(EditText.INVISIBLE);
-                        Toast.makeText(getBaseContext(), "Connection successful", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(getBaseContext(), "Connection fail", Toast.LENGTH_SHORT).show();
+                        hideConnectionUi();
                     }
                 } catch (IOException | InterruptedException e) {
                     e.printStackTrace();
                 }
-//                disconnectButton.setEnabled(true);
             }
         });
 
@@ -86,25 +80,22 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
                 editTextMessage.setText("");
             }
         });
-
-        /*
-        disconnectButton.setEnabled(false);
-        disconnectButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                client.disconnect();
-                client = null;
-                disconnectButton.setEnabled(false);
-                connectButton.setEnabled(true);
-                fab.setEnabled(false);
-            }
-        });
-*/
     }
 
     @Override
-    public void messageReceived(String message) {
+    public void setMessageReceived(String message) {
         messagesTextView.setText(messagesTextView.getText() + "\n" + message);
+    }
+
+    @Override
+    public void showConnectionResult(String result) {
+        Toast.makeText(getBaseContext(), result, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void alertServerDown(String message) {
+        showConnectionUi();
+        showConnectionResult(message);
     }
 
     @Override
@@ -112,7 +103,29 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
         super.onPause();
         if (client != null) {
             client.disconnect();
+            client = null;
         }
+    }
+
+    /**
+     * Hides views used for connection
+     */
+    private void hideConnectionUi() {
+        connectButton.setVisibility(Button.INVISIBLE);
+        editTextIp.setVisibility(EditText.INVISIBLE);
+        editTextPort.setVisibility(EditText.INVISIBLE);
+    }
+
+    /**
+     * Shows views used for connection and ends the current one
+     */
+    private void showConnectionUi() {
+        client.disconnect();
+        client = null;
+        connectButton.setVisibility(Button.VISIBLE);
+        editTextIp.setVisibility(EditText.VISIBLE);
+        editTextPort.setVisibility(EditText.VISIBLE);
+        messagesTextView.setText("");
     }
 
     @Override
@@ -129,24 +142,18 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        if (id == R.id.action_settings) {
-            if(client != null) {
-                client.disconnect();
-                client = null;
-                connectButton.setVisibility(Button.VISIBLE);
-                editTextIp.setVisibility(EditText.VISIBLE);
-                editTextPort.setVisibility(EditText.VISIBLE);
-
-                // Check if no view has focus
+        if (id == R.id.action_disconnect) {
+            if (client != null && client.isConnected()) {
+                showConnectionUi();
+                // check if no view has focus
                 View view = this.getCurrentFocus();
                 if (view != null) {
                     // hides the keyboard
-                    InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                     imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
                 }
                 Toast.makeText(getBaseContext(), "Connection closed", Toast.LENGTH_SHORT).show();
-            }
-            else {
+            } else {
                 Toast.makeText(getBaseContext(), "There is no connection", Toast.LENGTH_SHORT).show();
             }
             return true;

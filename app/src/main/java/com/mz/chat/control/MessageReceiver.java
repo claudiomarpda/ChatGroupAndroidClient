@@ -1,32 +1,32 @@
-package com.mz.chat;
+package com.mz.chat.control;
 
-/**
- * Created by mz on 15/06/17.
- */
 
 import android.os.AsyncTask;
-import android.util.Log;
+
+import com.mz.chat.util.AsyncResponse;
 
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
 
 /**
- * Receives message and update UI while connection is on.
+ * Created by mz on 15/06/17.
+ * <p>
+ * Receives message from the server and update UI while connection is on.
  */
-public class MessageReceiver extends AsyncTask<Void, String, String> {
+class MessageReceiver extends AsyncTask<Void, String, String> implements Connection {
+
+    private static final String SERVER_DOWN = "Server DOWN";
 
     private Socket socket;
     private DataInputStream inputStream;
     private AsyncResponse asyncResponse; // for UI update
 
-    public MessageReceiver(String ipAddress, int port, AsyncResponse asyncResponse) throws IOException {
+    MessageReceiver(String ipAddress, int port, AsyncResponse asyncResponse) throws IOException {
         socket = new Socket(ipAddress, port);
         inputStream = new DataInputStream(socket.getInputStream());
         this.asyncResponse = asyncResponse;
-        if (socket.isConnected()) {
-            Log.d("TAG", "connected " + getClass().getSimpleName());
-        }
     }
 
     @Override
@@ -34,8 +34,13 @@ public class MessageReceiver extends AsyncTask<Void, String, String> {
         String message = "";
         while (socket != null && inputStream != null) {
             try {
+                // waits for message from server (sent by others clients)
                 message = inputStream.readUTF();
+                // runs the UI thread
                 publishProgress(message);
+            } catch(EOFException e) {
+                publishProgress(SERVER_DOWN);
+                disconnect();
             } catch (IOException e) {
                 disconnect();
                 e.printStackTrace();
@@ -46,12 +51,26 @@ public class MessageReceiver extends AsyncTask<Void, String, String> {
 
     @Override
     protected void onProgressUpdate(String... values) {
-        asyncResponse.messageReceived(values[0]);
+        if(values[0].equals(SERVER_DOWN)) {
+            // tells the user the connection has finished from the server
+            onPostExecute(SERVER_DOWN);
+        }
+        else {
+            // updates the received message on UI
+            asyncResponse.setMessageReceived(values[0]);
+        }
+    }
+
+    @Override
+    protected void onPostExecute(String s) {
+        // updates UI after server down
+        asyncResponse.alertServerDown(s);
     }
 
     /**
      * Closes Socket and Stream connections.
      */
+    @Override
     public void disconnect() {
         try {
             if (socket != null) {
@@ -67,7 +86,9 @@ public class MessageReceiver extends AsyncTask<Void, String, String> {
         }
     }
 
+    @Override
     public boolean isConnected() {
         return socket.isConnected();
     }
+
 }

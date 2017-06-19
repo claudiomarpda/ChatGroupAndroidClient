@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:layout_marginTop="?attr/actionBarSize"
     android:descendantFocusability="beforeDescendants"
     android:focusableInTouchMode="true"
     android:orientation="vertical"
-    app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="com.mz.chat.MainActivity"
     tools:showIn="@layout/activity_main">
 
@@ -34,39 +33,14 @@
             android:hint="PORT" />
     </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/connectionButtonsLayout"
+    <Button
+        android:id="@+id/connectButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/connectionInputLayout"
         android:layout_gravity="bottom"
-        android:orientation="horizontal">
-
-        <Button
-            android:id="@+id/connectButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="Connect" />
-
-        <Button
-            android:id="@+id/disconnectButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="Disconnect" />
-    </LinearLayout>
-
-    <!--    <ListView
-            android:id="@+id/messages"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_above="@+id/connectionInputLayout"
-            android:layout_alignParentTop="true"
-            android:layout_below="@id/connectionButtonsLayout">
-        </ListView>-->
+        android:gravity="center"
+        android:text="Connect" />
 
     <TextView
         android:id="@+id/text_view"
@@ -74,7 +48,7 @@
         android:layout_height="wrap_content"
         android:layout_above="@+id/footer_section"
         android:layout_alignParentTop="true"
-        android:layout_below="@id/connectionButtonsLayout"
+        android:layout_below="@id/connectButton"
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp"
         android:gravity="bottom" />
@@ -85,7 +59,6 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:orientation="horizontal">
-        <!--android:background="#eeeeee"-->
 
         <EditText
             android:id="@+id/editTextMessage"

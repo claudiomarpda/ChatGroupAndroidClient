@@ -1,11 +1,6 @@
-package com.mz.chat;
-
-/**
- * Created by mz on 15/06/17.
- */
+package com.mz.chat.control;
 
 import android.os.AsyncTask;
-import android.util.Log;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -13,31 +8,31 @@ import java.net.Socket;
 import java.util.concurrent.Semaphore;
 
 /**
- * Sends a message to the server.
+ * Created by mz on 15/06/17.
+ * <p>
+ * Sends message to the server.
  */
-class MessageSender extends AsyncTask<Void, Void, Void> {
+class MessageSender extends AsyncTask<Void, Void, Void> implements Connection {
 
     private Socket socket;
     private DataOutputStream outputStream;
     private Semaphore semaphore;
     private String message;
 
-    public MessageSender(String ipAddress, int port, Semaphore semaphore) throws IOException {
+    MessageSender(String ipAddress, int port, Semaphore semaphore) throws IOException {
         socket = new Socket(ipAddress, port);
         outputStream = new DataOutputStream(socket.getOutputStream());
         this.semaphore = semaphore;
         message = "";
-        if (socket.isConnected()) {
-            Log.d("TAG", "connected " + getClass().getSimpleName());
-        }
     }
 
     @Override
     protected Void doInBackground(Void... voids) {
         while (true) {
             try {
-                Log.d("TAG", "before acquire" + getClass());
+                // waits until user selects send button
                 semaphore.acquire();
+                // sends the message
                 if (outputStream != null) {
                     outputStream.writeUTF(message);
                 }
@@ -46,12 +41,12 @@ class MessageSender extends AsyncTask<Void, Void, Void> {
                 e.printStackTrace();
             }
         }
-        // return null;
     }
 
     /**
      * Closes Socket and Stream connections.
      */
+    @Override
     public void disconnect() {
         try {
             if (socket != null) {
@@ -67,11 +62,12 @@ class MessageSender extends AsyncTask<Void, Void, Void> {
         }
     }
 
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
+    @Override
     public boolean isConnected() {
         return socket.isConnected();
+    }
+
+    void setMessage(String message) {
+        this.message = message;
     }
 }
