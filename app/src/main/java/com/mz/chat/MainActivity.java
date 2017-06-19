@@ -101,8 +101,8 @@ public class MainActivity extends AppCompatActivity implements AsyncResponse {
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
+    protected void onDestroy() {
+        super.onDestroy();
         if (client != null) {
             client.disconnect();
             client = null;
